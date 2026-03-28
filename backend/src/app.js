@@ -1,6 +1,8 @@
 import cors from "cors";
 import express from "express";
 import chatRouter from "./routes/chat.js";
+import fontsRouter from "./routes/fonts.js";
+import knowledgeRouter from "./routes/knowledge.js";
 
 const app = express();
 
@@ -41,6 +43,8 @@ app.use((_req, res, next) => {
 app.use(express.json());
 
 app.use("/api/chat", chatRouter);
+app.use("/api/fonts", fontsRouter);
+app.use("/api/knowledge", knowledgeRouter);
 
 app.get("/health", (_req, res) => {
   res.status(200).json({ ok: true, service: "backend" });

@@ -1,24 +1,155 @@
+const normalizeVariantValue = (value) => {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (!normalized) {
+    return "";
+  }
+
+  if (normalized === "normal" || normalized === "regular") {
+    return "400";
+  }
+
+  if (normalized === "italic") {
+    return "italic";
+  }
+
+  const weightItalicMatch = normalized.match(/^([1-9]00)(italic)?$/);
+  if (weightItalicMatch) {
+    const [, weightText, italicToken] = weightItalicMatch;
+    return italicToken ? `${weightText}italic` : weightText;
+  }
+
+  return normalized;
+};
+
+const normalizeVariants = (variants) => {
+  const unique = [];
+  const seen = new Set();
+
+  for (const rawVariant of Array.isArray(variants) ? variants : []) {
+    const variant = normalizeVariantValue(rawVariant);
+    if (!variant || seen.has(variant)) {
+      continue;
+    }
+
+    seen.add(variant);
+    unique.push(variant);
+  }
+
+  return unique;
+};
+
+const buildFallbackRecommendations = ({
+  primaryFont,
+  secondaryFont,
+  rationale,
+  googleFontsLinks,
+}) => {
+  const safePrimary = String(primaryFont || "").trim();
+  const safeSecondary = String(secondaryFont || "").trim();
+  const safeRationale = String(rationale || "Balanced pairing for hierarchy and readability.").trim();
+
+  if (!safePrimary || !safeSecondary) {
+    return [];
+  }
+
+  const primaryLink = Array.isArray(googleFontsLinks) && googleFontsLinks[0]
+    ? String(googleFontsLinks[0])
+    : "";
+  const secondaryLink = Array.isArray(googleFontsLinks) && googleFontsLinks[1]
+    ? String(googleFontsLinks[1])
+    : primaryLink;
+
+  return [
+    {
+      fontFamily: safePrimary,
+      role: "heading",
+      shortRationale: safeRationale,
+      sampleText: "Typography defines your first impression.",
+      provider: "google-fonts",
+      variants: ["400", "700"],
+      downloadUrl: primaryLink,
+      stylesheetUrl: "",
+    },
+    {
+      fontFamily: safeSecondary,
+      role: "body",
+      shortRationale: "Readable body text supports conversion and trust.",
+      sampleText: "Readable copy increases clarity and confidence.",
+      provider: "google-fonts",
+      variants: ["400", "500", "700"],
+      downloadUrl: secondaryLink,
+      stylesheetUrl: "",
+    },
+    {
+      fontFamily: safePrimary,
+      role: "accent",
+      shortRationale: "Use controlled accents for CTAs and key highlights.",
+      sampleText: "Strong accents guide user attention.",
+      provider: "google-fonts",
+      variants: ["500", "700"],
+      downloadUrl: primaryLink,
+      stylesheetUrl: "",
+    },
+  ];
+};
+
 const parseObject = (value) => {
   if (!value || typeof value !== "object") {
     return null;
   }
 
+  const recommendations = Array.isArray(value.recommendations)
+    ? value.recommendations
+        .filter((entry) => entry && typeof entry === "object")
+        .map((entry) => ({
+          fontFamily: String(entry.fontFamily || entry.family || "").trim(),
+          role: String(entry.role || "body").trim() || "body",
+          shortRationale: String(entry.shortRationale || entry.rationale || "").trim(),
+          sampleText: String(entry.sampleText || "").trim(),
+          provider: String(entry.provider || "google-fonts").trim() || "google-fonts",
+          variants: normalizeVariants(entry.variants),
+          downloadUrl: String(entry.downloadUrl || "").trim(),
+          stylesheetUrl: String(entry.stylesheetUrl || "").trim(),
+        }))
+        .filter((entry) => entry.fontFamily)
+    : [];
+
   const primaryFont = value.primaryFont || value.primary_font;
   const secondaryFont = value.secondaryFont || value.secondary_font;
   const rationale = value.rationale || value.reasoning || value.explanation;
 
-  if (!primaryFont || !secondaryFont || !rationale) {
+  const derivedPrimary = primaryFont || recommendations[0]?.fontFamily;
+  const derivedSecondary = secondaryFont || recommendations[1]?.fontFamily || derivedPrimary;
+  const derivedRationale = rationale || recommendations[0]?.shortRationale;
+
+  if (!derivedPrimary || !derivedSecondary || !derivedRationale) {
     return null;
   }
 
+  const derivedLinks = recommendations
+    .map((entry) => entry.downloadUrl)
+    .filter(Boolean);
+
+  const finalLinks = Array.isArray(value.googleFontsLinks)
+    ? value.googleFontsLinks.map(String)
+    : derivedLinks;
+
+  const finalRecommendations = recommendations.length
+    ? recommendations
+    : buildFallbackRecommendations({
+        primaryFont: derivedPrimary,
+        secondaryFont: derivedSecondary,
+        rationale: derivedRationale,
+        googleFontsLinks: finalLinks,
+      });
+
   return {
-    primaryFont: String(primaryFont),
-    secondaryFont: String(secondaryFont),
-    rationale: String(rationale),
+    primaryFont: String(derivedPrimary),
+    secondaryFont: String(derivedSecondary),
+    rationale: String(derivedRationale),
     useCases: Array.isArray(value.useCases) ? value.useCases.map(String) : [],
-    googleFontsLinks: Array.isArray(value.googleFontsLinks)
-      ? value.googleFontsLinks.map(String)
-      : [],
+    googleFontsLinks: finalLinks,
+    recommendations: finalRecommendations,
   };
 };
 

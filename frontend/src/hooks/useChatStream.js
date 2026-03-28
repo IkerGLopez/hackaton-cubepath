@@ -8,6 +8,8 @@ export const useChatStream = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [lastMessage, setLastMessage] = useState("");
+  const [contextMeta, setContextMeta] = useState(null);
+  const [streamDiagnostics, setStreamDiagnostics] = useState(null);
 
   const stopStreaming = useCallback(() => {
     abortControllerRef.current?.abort();
@@ -23,6 +25,8 @@ export const useChatStream = () => {
 
     setResponseText("");
     setError("");
+    setContextMeta(null);
+    setStreamDiagnostics(null);
     setIsLoading(true);
     setLastMessage(message);
 
@@ -39,6 +43,12 @@ export const useChatStream = () => {
         onError: (details) => {
           setError(details || "The assistant failed while streaming.");
           setIsLoading(false);
+        },
+        onMeta: (meta) => {
+          setContextMeta(meta);
+        },
+        onDiagnostics: (diagnostics) => {
+          setStreamDiagnostics(diagnostics);
         },
       });
     } catch (streamError) {
@@ -76,6 +86,8 @@ export const useChatStream = () => {
     isLoading,
     error,
     lastMessage,
+    contextMeta,
+    streamDiagnostics,
     submitMessage,
     retryLastMessage,
     stopStreaming,

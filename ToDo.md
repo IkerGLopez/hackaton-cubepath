@@ -1,6 +1,12 @@
-- Quitar emoticonos de las respuestas.
-- Que lo que responda sea una serie de fuentes pero no una respuesta larga, sino:
-    - Un componente que muestre la fuente con un texto de ejemplo.
-    - La posibilidad de poner el texto que prefieras y se vea como muestra.
-    - Poder descargar la fuente con un botón de download.
-- Coger una API de fuentes (la de Google puede ser buena opción, pero buscar más).
+- ✅ Quitar emoticonos de las respuestas.
+- ✅ Que lo que responda sea una serie de fuentes pero no una respuesta larga, sino un componente que:
+    - ✅ Muestre la fuente con un texto de ejemplo.
+    - ✅ Tenga la posibilidad de poner el texto que prefieras y se vea como muestra.
+    - ✅ Se pueda descargar la fuente con un botón de download.
+- ✅ Coger una API de fuentes (Google Fonts Developer API, Google Fonts Web API, Fontsource, Bunny Fonts) para tener un registro más amplio de fuentes.
+- ✅ Tratar de darle más contexto al modelo. Por ejemplo con artículos, revistas digitales o demás sobre tipografías y diseño (¿RAG?).
+
+- ✅ Quitar la parte de CONTEXT USED DEBUG.
+- ✅ Quitar la parte de PRIMARY FONT, SECONDARY FONT y RATIONALE.
+- ✅ Quitar la parte de USE CASES.
+- ✅ Hacer que los textos de grosores de fuente (100, 200, regular, italic, etc.) sean botones que modifiquen el estilo del texto de ejemplo al pulsarlos.

@@ -1,0 +1,24 @@
+{
+  "documents": [
+    {
+      "id": "landing-hero-clarity",
+      "title": "Landing Hero Typographic Clarity",
+      "tags": ["landing", "hero", "cta", "conversion"],
+      "intents": ["landing", "ecommerce"],
+      "sourceName": "Growth Typography Notes",
+      "sourceType": "best-practice",
+      "sourceUrl": "https://www.nngroup.com/articles/",
+      "content": "Landing hero sections need immediate hierarchy. Use a high-impact heading style and a stable body style that supports trust and quick comprehension."
+    },
+    {
+      "id": "dashboard-data-density",
+      "title": "Dashboard Data Density and Readability",
+      "tags": ["dashboard", "metrics", "density", "ui"],
+      "intents": ["dashboard"],
+      "sourceName": "Data Product Patterns",
+      "sourceType": "guideline",
+      "sourceUrl": "https://m3.material.io/styles/typography/",
+      "content": "Dashboards should keep critical metrics visually dominant with restrained secondary text styles to avoid cognitive overload in dense interfaces."
+    }
+  ]
+}

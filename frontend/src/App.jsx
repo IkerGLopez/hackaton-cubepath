@@ -7,7 +7,15 @@ import { parseAiRecommendation } from "./utils/parseAiRecommendation";
 
 function App() {
   const [message, setMessage] = useState("");
-  const { responseText, isLoading, error, lastMessage, submitMessage, retryLastMessage, stopStreaming } =
+  const {
+    responseText,
+    isLoading,
+    error,
+    lastMessage,
+    submitMessage,
+    retryLastMessage,
+    stopStreaming,
+  } =
     useChatStream();
 
   const hasSuccess = responseText.length > 0 && !isLoading && !error;

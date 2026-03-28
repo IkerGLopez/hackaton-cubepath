@@ -1,3 +1,26 @@
+import { useEffect, useMemo, useState } from "react";
+import { useResolvedFontCards } from "../hooks/useResolvedFontCards";
+import FontRecommendationCard from "./FontRecommendationCard";
+
+const ensureStylesheetLoaded = (href) => {
+  if (!href || typeof document === "undefined") {
+    return;
+  }
+
+  const alreadyLoaded = Array.from(document.querySelectorAll("link[rel='stylesheet']"))
+    .some((link) => link.href === href);
+
+  if (alreadyLoaded) {
+    return;
+  }
+
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = href;
+  link.setAttribute("data-font-stylesheet", "true");
+  document.head.appendChild(link);
+};
+
 function ChatPanel({
   message,
   onMessageChange,
@@ -11,6 +34,32 @@ function ChatPanel({
   hasSuccess,
   canRetry,
 }) {
+  const [previewText, setPreviewText] = useState("");
+
+  const sourceRecommendations = useMemo(
+    () => parsedRecommendation?.recommendations || [],
+    [parsedRecommendation],
+  );
+  const { cards } = useResolvedFontCards(sourceRecommendations);
+
+  const recommendationSignature = useMemo(
+    () => sourceRecommendations.map((entry) => entry.fontFamily).join("|"),
+    [sourceRecommendations],
+  );
+
+  useEffect(() => {
+    const firstSample = sourceRecommendations[0]?.sampleText || "";
+    setPreviewText(firstSample);
+  }, [recommendationSignature, sourceRecommendations]);
+
+  useEffect(() => {
+    cards.forEach((card) => {
+      ensureStylesheetLoaded(card.stylesheetUrl);
+    });
+  }, [cards]);
+
+  const hasCardRecommendations = sourceRecommendations.length > 0 && cards.length > 0;
+
   return (
     <aside className="rounded-3xl border border-stone-900/10 bg-stone-900 p-5 text-stone-100 shadow-[0_24px_50px_-30px_rgba(25,15,10,0.85)] sm:p-6">
       <p className="text-[11px] font-semibold tracking-[0.2em] text-amber-300">CHATBOT</p>
@@ -66,34 +115,33 @@ function ChatPanel({
 
         {parsedRecommendation ? (
           <div className="mt-3 space-y-3 text-sm text-stone-100">
-            <div className="grid gap-2 sm:grid-cols-2">
-              <div className="rounded-xl border border-stone-700 bg-stone-900/80 p-3">
-                <p className="text-[11px] tracking-[0.16em] text-amber-200">PRIMARY FONT</p>
-                <p className="mt-1 text-base">{parsedRecommendation.primaryFont}</p>
-              </div>
-              <div className="rounded-xl border border-stone-700 bg-stone-900/80 p-3">
-                <p className="text-[11px] tracking-[0.16em] text-amber-200">SECONDARY FONT</p>
-                <p className="mt-1 text-base">{parsedRecommendation.secondaryFont}</p>
-              </div>
-            </div>
-
             <div className="rounded-xl border border-stone-700 bg-stone-900/80 p-3">
-              <p className="text-[11px] tracking-[0.16em] text-amber-200">RATIONALE</p>
-              <p className="mt-1 text-sm leading-relaxed">{parsedRecommendation.rationale}</p>
+              <label htmlFor="font-preview-input" className="text-[11px] tracking-[0.16em] text-amber-200">
+                PREVIEW TEXT
+              </label>
+              <input
+                id="font-preview-input"
+                type="text"
+                value={previewText}
+                onChange={(event) => setPreviewText(event.target.value)}
+                placeholder="Write your own preview sentence"
+                className="mt-2 w-full rounded-lg border border-stone-600 bg-stone-950/80 px-3 py-2 text-sm text-stone-100 outline-none ring-amber-300/40 focus:ring"
+              />
             </div>
 
-            {parsedRecommendation.useCases.length > 0 && (
-              <div className="rounded-xl border border-stone-700 bg-stone-900/80 p-3">
-                <p className="text-[11px] tracking-[0.16em] text-amber-200">USE CASES</p>
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-stone-200">
-                  {parsedRecommendation.useCases.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
+            {hasCardRecommendations && (
+              <div className="grid gap-3">
+                {cards.map((card) => (
+                  <FontRecommendationCard
+                    key={`${card.fontFamily}-${card.role}`}
+                    card={card}
+                    previewText={previewText}
+                  />
+                ))}
               </div>
             )}
 
-            {parsedRecommendation.googleFontsLinks.length > 0 && (
+            {!hasCardRecommendations && parsedRecommendation.googleFontsLinks.length > 0 && (
               <div className="rounded-xl border border-stone-700 bg-stone-900/80 p-3">
                 <p className="text-[11px] tracking-[0.16em] text-amber-200">GOOGLE FONTS LINKS</p>
                 <div className="mt-2 flex flex-wrap gap-2">

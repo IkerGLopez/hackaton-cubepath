@@ -1,16 +1,118 @@
-# React + Vite
+# Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React SPA for the interactive landing page and typography chat experience.
 
-Currently, two official plugins are available:
+## Responsibilities
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Render marketing/hero content and feature sections.
+- Send user prompt to backend chat stream endpoint.
+- Consume SSE incrementally and render recommendation results.
+- Parse structured AI output safely.
+- Resolve and enrich recommended fonts from backend catalog.
+- Render recommendation cards with:
+	- Editable preview text.
+	- Interactive variant buttons (weight/style).
+	- Font download link.
 
-## React Compiler
+## Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React 19
+- Vite 6
+- Tailwind CSS 4
+- Lucide React
 
-## Expanding the ESLint configuration
+## Run frontend
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+From repository root:
+
+```bash
+pnpm --filter frontend dev
+```
+
+Build:
+
+```bash
+pnpm --filter frontend build
+```
+
+Preview production build:
+
+```bash
+pnpm --filter frontend start
+```
+
+## Environment variable
+
+- VITE_API_BASE_URL: backend base URL (default http://localhost:3001).
+
+## Main flow
+
+1. User submits context in chat panel.
+2. useChatStream calls streamChat service.
+3. streamChat consumes SSE events from /api/chat/stream.
+4. token events are concatenated to response text.
+5. parseAiRecommendation transforms response text into structured object.
+6. useResolvedFontCards enriches each recommendation via /api/fonts/:family.
+7. Font cards render preview, variant controls, and download links.
+
+## SSE events handled
+
+- token
+- meta
+- diagnostics
+- usage
+- done
+- error
+
+The UI currently uses token and error as core signals, and keeps meta/diagnostics in hook state for optional future use.
+
+## Project structure
+
+```text
+frontend/
+	src/
+		components/
+			ChatPanel.jsx
+			FontRecommendationCard.jsx
+			LandingHero.jsx
+			FeatureList.jsx
+		hooks/
+			useChatStream.js
+			useResolvedFontCards.js
+		services/
+			chatService.js
+			fontCatalogService.js
+		utils/
+			parseAiRecommendation.js
+		App.jsx
+		main.jsx
+```
+
+## Key components
+
+- ChatPanel: input, actions, loading/error/success states, card layout.
+- FontRecommendationCard: visual card + variant buttons controlling preview weight/style.
+
+## Error handling
+
+- Stream request timeout handling.
+- Abort handling when user stops a request.
+- Friendly network/offline error messages.
+- Safe JSON parse with object extraction fallback.
+
+## Styling notes
+
+- Tailwind utility-first styling.
+- Mobile-first responsive behavior.
+- Dynamic stylesheet injection for recommended font families.
+
+## Developer notes
+
+- Keep API keys out of frontend.
+- Use backend endpoints only.
+- Keep components modular; split files if component complexity grows.
+
+## Related docs
+
+- Root overview: ../README.md
+- Backend details: ../backend/README.md

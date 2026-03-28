@@ -7,8 +7,11 @@ const SAMPLE_PROMPTS = [
 function LandingHero({ onUsePrompt }) {
   return (
     <section className="rounded-3xl border border-amber-900/20 bg-white/70 p-5 shadow-[0_14px_50px_-30px_rgba(30,20,10,0.45)] backdrop-blur sm:p-7">
-      <p className="text-[11px] font-semibold tracking-[0.2em] text-amber-700">
-        CUBEPATH TYPE STUDIO
+      <p
+        className="text-[11px] font-semibold tracking-[0.2em] text-amber-700"
+        style={{ fontFamily: '"Fraunces", Georgia, serif' }}
+      >
+        fONTIT TYPE STUDIO
       </p>
 
       <h1 className="mt-4 text-4xl leading-[0.95] text-stone-900 sm:text-5xl lg:text-6xl">

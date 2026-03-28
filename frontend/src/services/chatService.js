@@ -30,7 +30,15 @@ const parseSseEvents = (rawChunk, onEvent) => {
   }
 };
 
-export const streamChat = async ({ message, signal, onToken, onDone, onError }) => {
+export const streamChat = async ({
+  message,
+  signal,
+  onToken,
+  onDone,
+  onError,
+  onMeta,
+  onDiagnostics,
+}) => {
   const timeoutController = new AbortController();
   const timeoutId = setTimeout(() => timeoutController.abort(), STREAM_TIMEOUT_MS);
   const abortByCaller = () => timeoutController.abort();
@@ -91,8 +99,16 @@ export const streamChat = async ({ message, signal, onToken, onDone, onError }) 
           onToken?.(data?.token || "");
         }
 
+        if (event === "meta") {
+          onMeta?.(data || null);
+        }
+
         if (event === "error") {
           onError?.(data?.details || data?.error || "Unknown stream error");
+        }
+
+        if (event === "diagnostics") {
+          onDiagnostics?.(data || null);
         }
 
         if (event === "done") {
@@ -104,6 +120,14 @@ export const streamChat = async ({ message, signal, onToken, onDone, onError }) 
 
     if (buffer.trim()) {
       parseSseEvents(buffer, (event, data) => {
+        if (event === "meta") {
+          onMeta?.(data || null);
+        }
+
+        if (event === "diagnostics") {
+          onDiagnostics?.(data || null);
+        }
+
         if (event === "done") {
           doneEventReceived = true;
           onDone?.();
