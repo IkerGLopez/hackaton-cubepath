@@ -19,7 +19,26 @@ const readMaxModelAttempts = () => {
   return Math.min(Math.max(parsed, 1), 6);
 };
 
+const readMaxRepairAttempts = () => {
+  const parsed = Number.parseInt(String(process.env.CHAT_MAX_REPAIR_ATTEMPTS || "1"), 10);
+  if (!Number.isFinite(parsed)) {
+    return 1;
+  }
+
+  return Math.min(Math.max(parsed, 0), 3);
+};
+
+const readTotalTimeoutMs = () => {
+  const parsed = Number.parseInt(String(process.env.CHAT_TOTAL_TIMEOUT_MS || "55000"), 10);
+  if (!Number.isFinite(parsed)) {
+    return 55000;
+  }
+
+  return Math.min(Math.max(parsed, 10000), 180000);
+};
+
 const MAX_MODEL_ATTEMPTS = readMaxModelAttempts();
+const MAX_REPAIR_ATTEMPTS = readMaxRepairAttempts();
 const OUTBOUND_TOKEN_CHUNK_SIZE = 72;
 
 const SYSTEM_PROMPT = [
@@ -156,6 +175,7 @@ chatRouter.post("/stream", async (req, res) => {
   }
 
   const timeoutMs = Number(process.env.OPENROUTER_TIMEOUT_MS || 45000);
+  const totalTimeoutMs = readTotalTimeoutMs();
 
   let retrievedContext;
   try {
@@ -233,13 +253,21 @@ chatRouter.post("/stream", async (req, res) => {
     let completedAttempt = 0;
 
     for (let attempt = 1; attempt <= MAX_MODEL_ATTEMPTS; attempt += 1) {
+      const elapsedBeforeAttempt = Date.now() - startedAt;
+      const remainingBeforeAttempt = totalTimeoutMs - elapsedBeforeAttempt;
+
+      if (remainingBeforeAttempt <= 1000) {
+        console.warn(`[chat][${requestId}] total timeout budget reached before attempt ${attempt}`);
+        break;
+      }
+
       const completion = await requestModelCompletion({
         prompt: buildUserPrompt({
           message,
           contextBlock,
           correctionHint,
         }),
-        timeoutMs,
+        timeoutMs: Math.min(timeoutMs, remainingBeforeAttempt),
       });
 
       reasoningTokens = completion.reasoningTokens || reasoningTokens;
@@ -252,32 +280,51 @@ chatRouter.post("/stream", async (req, res) => {
         break;
       }
 
-      const repaired = await requestModelCompletion({
-        prompt: buildRepairPrompt({
-          malformedOutput: completion.text,
-          correctionHint: parsed.details,
-        }),
-        timeoutMs: Math.min(timeoutMs, 25000),
-        systemPrompt: REPAIR_SYSTEM_PROMPT,
-      });
+      let repairDetails = "";
+      const canTryRepair = attempt <= MAX_REPAIR_ATTEMPTS;
 
-      reasoningTokens = repaired.reasoningTokens || reasoningTokens;
+      if (canTryRepair) {
+        const elapsedBeforeRepair = Date.now() - startedAt;
+        const remainingBeforeRepair = totalTimeoutMs - elapsedBeforeRepair;
 
-      const repairedParsed = parseAndValidateStructuredRecommendation(repaired.text);
-      if (repairedParsed.ok) {
-        recommendationPayload = repairedParsed.value;
-        repairUsed = true;
-        completedAttempt = attempt;
-        console.info(`[chat][${requestId}] structured JSON repaired successfully on attempt ${attempt}`);
-        break;
+        if (remainingBeforeRepair > 1500) {
+          const repaired = await requestModelCompletion({
+            prompt: buildRepairPrompt({
+              malformedOutput: completion.text,
+              correctionHint: parsed.details,
+            }),
+            timeoutMs: Math.min(timeoutMs, 25000, remainingBeforeRepair),
+            systemPrompt: REPAIR_SYSTEM_PROMPT,
+          });
+
+          reasoningTokens = repaired.reasoningTokens || reasoningTokens;
+
+          const repairedParsed = parseAndValidateStructuredRecommendation(repaired.text);
+          if (repairedParsed.ok) {
+            recommendationPayload = repairedParsed.value;
+            repairUsed = true;
+            completedAttempt = attempt;
+            console.info(`[chat][${requestId}] structured JSON repaired successfully on attempt ${attempt}`);
+            break;
+          }
+
+          repairDetails = repairedParsed.details;
+        } else {
+          repairDetails = "Skipped JSON repair due to low remaining timeout budget.";
+        }
+      } else {
+        repairDetails = "Skipped JSON repair after reaching max repair attempts.";
       }
 
-      correctionHint = `${parsed.details} ${repairedParsed.details} Ensure valid JSON with all required fields.`;
+      correctionHint = `${parsed.details} ${repairDetails} Ensure valid JSON with all required fields.`;
       console.warn(`[chat][${requestId}] invalid model response on attempt ${attempt}: ${parsed.details}`);
     }
 
     if (!recommendationPayload) {
-      const details = "The AI model did not return valid structured JSON after multiple attempts. Please retry.";
+      const timeoutExceeded = Date.now() - startedAt >= totalTimeoutMs;
+      const details = timeoutExceeded
+        ? "The request exceeded the server time budget. Please retry with a shorter prompt."
+        : "The AI model did not return valid structured JSON after multiple attempts. Please retry.";
       console.warn(`[chat][${requestId}] ai-only mode: no valid structured output after ${MAX_MODEL_ATTEMPTS} attempts`);
 
       if (!clientClosed) {
@@ -313,6 +360,8 @@ chatRouter.post("/stream", async (req, res) => {
         requestId,
         attempts: completedAttempt || MAX_MODEL_ATTEMPTS,
         repairUsed,
+        maxRepairAttempts: MAX_REPAIR_ATTEMPTS,
+        totalTimeoutMs,
       });
     }
 

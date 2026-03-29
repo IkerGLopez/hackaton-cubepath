@@ -62,6 +62,10 @@ This behavior is implemented in src/server.js.
 - KNOWLEDGE_DIR: folder used for external knowledge ingestion.
 - KNOWLEDGE_CACHE_TTL_MS: ingestion cache TTL.
 
+Recommended value in this repository:
+
+- KNOWLEDGE_DIR=backend/knowledge
+
 ## API endpoints
 
 ### Health
@@ -179,5 +183,5 @@ If chat ends with format error:
 ## Related docs
 
 - Root overview: ../README.md
-- Knowledge schema: ../knowledge/README.md
+- Knowledge schema: ../backend/knowledge/README.md
 - Frontend details: ../frontend/README.md

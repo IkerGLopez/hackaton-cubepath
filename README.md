@@ -10,7 +10,7 @@ The app helps users describe a UI/UX context and receive structured font recomme
 hackaton-cubepath/
   frontend/    React + Vite + Tailwind SPA
   backend/     Express proxy + SSE + AI orchestration
-  knowledge/   External knowledge documents (JSON/Markdown)
+  backend/knowledge/  Canonical external knowledge documents (JSON/Markdown)
 ```
 
 ## Tech stack
@@ -31,7 +31,7 @@ hackaton-cubepath/
   - Interactive variant buttons (weight/style).
 - RAG-lite context retrieval:
   - Internal typography corpus.
-  - External ingestion from knowledge/ directory.
+  - External ingestion from backend/knowledge/ directory.
   - Intent-aware reranking (landing, dashboard, ecommerce, editorial).
 
 ## Prerequisites
@@ -112,13 +112,13 @@ For full backend details, see backend/README.md.
 
 ## Knowledge ingestion
 
-Add JSON/Markdown files under knowledge/ to extend context without code changes.
+Add JSON/Markdown files under backend/knowledge/ to extend context without code changes.
 
 - JSON: array or { "documents": [...] }
 - Markdown: optional frontmatter + body content
 - Supported intents: landing, dashboard, ecommerce, editorial
 
-See knowledge/README.md for exact schema examples.
+See backend/knowledge/README.md for exact schema examples.
 
 ## Frontend behavior
 
@@ -145,5 +145,5 @@ See DEPLOY_CHECKLIST.md for deployment checklist.
 
 - Frontend guide: frontend/README.md
 - Backend guide: backend/README.md
-- Knowledge format: knowledge/README.md
+- Knowledge format: backend/knowledge/README.md
 - Plan and phases: PLAN.md

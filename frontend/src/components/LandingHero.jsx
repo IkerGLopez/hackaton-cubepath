@@ -1,6 +1,6 @@
 const SAMPLE_PROMPTS = [
   "Premium serif + clean sans for a legal-tech brand homepage",
-  "Friendly type system for an ed-tech product used by teens",
+  "Friendly font pairing for an ed-tech product used by teens",
   "Bold modern pairing for a high-conversion SaaS landing page",
 ];
 

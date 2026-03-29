@@ -78,16 +78,20 @@ const buildDirectoryCandidates = () => {
       return [envDirectory];
     }
 
-    return [
+    return Array.from(new Set([
       path.resolve(process.cwd(), envDirectory),
+      path.resolve(process.cwd(), "backend", envDirectory),
       path.resolve(process.cwd(), "..", envDirectory),
-    ];
+      path.resolve(process.cwd(), "..", "backend", envDirectory),
+    ]));
   }
 
-  return [
+  return Array.from(new Set([
     path.resolve(process.cwd(), "knowledge"),
+    path.resolve(process.cwd(), "backend", "knowledge"),
     path.resolve(process.cwd(), "..", "knowledge"),
-  ];
+    path.resolve(process.cwd(), "..", "backend", "knowledge"),
+  ]));
 };
 
 const resolveKnowledgeDirectory = async () => {
