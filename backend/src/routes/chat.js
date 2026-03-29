@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { randomUUID } from "node:crypto";
 import { getModelName, openrouter } from "../services/openRouterClient.js";
+import { evaluateChatPromptPolicy } from "../utils/chatPromptPolicy.js";
 import { validateChatInput } from "../utils/sanitizeChatInput.js";
 import { parseAndValidateStructuredRecommendation } from "../utils/structuredRecommendation.js";
 import {
@@ -143,6 +144,17 @@ chatRouter.post("/stream", async (req, res) => {
   }
 
   const message = validation.sanitized;
+  const promptPolicy = evaluateChatPromptPolicy(message);
+
+  if (!promptPolicy.ok) {
+    console.warn(`[chat][${requestId}] blocked prompt: ${promptPolicy.details}`);
+    return res.status(promptPolicy.statusCode).json({
+      error: promptPolicy.error,
+      details: promptPolicy.details,
+      requestId,
+    });
+  }
+
   const timeoutMs = Number(process.env.OPENROUTER_TIMEOUT_MS || 45000);
 
   let retrievedContext;

@@ -23,13 +23,17 @@ function LandingHero({ onUsePrompt }) {
         real time, with rationale and practical implementation guidance.
       </p>
 
+      <p className="mt-6 text-[11px] font-semibold tracking-[0.16em] text-amber-700/90">
+        PROMPT EXAMPLES
+      </p>
+
       <div className="mt-7 grid gap-3 sm:grid-cols-3">
         {SAMPLE_PROMPTS.map((prompt) => (
           <button
             key={prompt}
             type="button"
             onClick={() => onUsePrompt(prompt)}
-            className="rounded-2xl border border-stone-200 bg-white px-3 py-3 text-left text-xs leading-relaxed text-stone-700 transition hover:border-amber-300 hover:bg-amber-50"
+            className="rounded-2xl border border-stone-200 bg-white px-3 py-3 text-left text-xs leading-relaxed text-stone-700 transition hover:border-amber-300 hover:cursor-pointer hover:bg-amber-50"
           >
             {prompt}
           </button>

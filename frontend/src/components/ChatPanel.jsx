@@ -34,7 +34,7 @@ function ChatPanel({
   hasSuccess,
   canRetry,
 }) {
-  const [previewText, setPreviewText] = useState("");
+  const [previewState, setPreviewState] = useState({ signature: "", text: "" });
 
   const sourceRecommendations = useMemo(
     () => parsedRecommendation?.recommendations || [],
@@ -47,10 +47,10 @@ function ChatPanel({
     [sourceRecommendations],
   );
 
-  useEffect(() => {
-    const firstSample = sourceRecommendations[0]?.sampleText || "";
-    setPreviewText(firstSample);
-  }, [recommendationSignature, sourceRecommendations]);
+  const firstSample = sourceRecommendations[0]?.sampleText || "";
+  const previewText = previewState.signature === recommendationSignature
+    ? previewState.text
+    : firstSample;
 
   useEffect(() => {
     cards.forEach((card) => {
@@ -86,7 +86,7 @@ function ChatPanel({
 
           <button
             type="button"
-            className="rounded-xl border border-stone-600 px-4 py-2 text-sm text-stone-200 transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-xl border border-stone-600 px-4 py-2 text-sm text-stone-200 transition hover:bg-stone-800 hover:cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
             onClick={onRetry}
             disabled={isLoading || !canRetry}
           >
@@ -95,7 +95,7 @@ function ChatPanel({
 
           <button
             type="button"
-            className="rounded-xl border border-stone-600 px-4 py-2 text-sm text-stone-200 transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-xl border border-stone-600 px-4 py-2 text-sm text-stone-200 transition hover:bg-stone-800 hover:cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
             onClick={onStop}
             disabled={!isLoading}
           >
@@ -108,9 +108,10 @@ function ChatPanel({
         {isLoading && <p className="text-xs tracking-[0.16em] text-amber-200">LOADING</p>}
         {hasSuccess && <p className="text-xs tracking-[0.16em] text-emerald-300">SUCCESS</p>}
         {error && (
-          <p className="rounded-lg border border-red-300/30 bg-red-400/10 px-3 py-2 text-xs text-red-100">
-            ERROR: {error}
-          </p>
+          <div className="rounded-lg border border-red-300/30 bg-red-400/10 px-3 py-2 text-xs text-red-100">
+            <p>ERROR: {error}</p>
+            <p className="mt-1 text-red-50/95">Try again.</p>
+          </div>
         )}
 
         {parsedRecommendation ? (
@@ -123,7 +124,10 @@ function ChatPanel({
                 id="font-preview-input"
                 type="text"
                 value={previewText}
-                onChange={(event) => setPreviewText(event.target.value)}
+                onChange={(event) => setPreviewState({
+                  signature: recommendationSignature,
+                  text: event.target.value,
+                })}
                 placeholder="Write your own preview sentence"
                 className="mt-2 w-full rounded-lg border border-stone-600 bg-stone-950/80 px-3 py-2 text-sm text-stone-100 outline-none ring-amber-300/40 focus:ring"
               />

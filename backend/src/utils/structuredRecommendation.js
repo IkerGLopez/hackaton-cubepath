@@ -31,6 +31,27 @@ const isValidUrl = (value) => {
   }
 };
 
+const getDuplicateFontFamilies = (recommendations) => {
+  const seen = new Set();
+  const duplicates = new Set();
+
+  for (const item of Array.isArray(recommendations) ? recommendations : []) {
+    const familyKey = String(item?.fontFamily || "").trim().toLowerCase();
+    if (!familyKey) {
+      continue;
+    }
+
+    if (seen.has(familyKey)) {
+      duplicates.add(String(item.fontFamily).trim());
+      continue;
+    }
+
+    seen.add(familyKey);
+  }
+
+  return Array.from(duplicates);
+};
+
 const extractJsonPayload = (rawText) => {
   const withoutCodeFence = String(rawText || "")
     .replace(/```json/gi, "")
@@ -149,6 +170,14 @@ export const parseAndValidateStructuredRecommendation = (rawText) => {
     return {
       ok: false,
       details: "Model output is not valid structured JSON for recommendations.",
+    };
+  }
+
+  const duplicateFamilies = getDuplicateFontFamilies(normalized.recommendations);
+  if (duplicateFamilies.length > 0) {
+    return {
+      ok: false,
+      details: `Recommendations must use unique fontFamily values. Duplicates: ${duplicateFamilies.join(", ")}`,
     };
   }
 

@@ -63,6 +63,23 @@ const normalizeRecommendation = (entry) => {
   };
 };
 
+const dedupeRecommendationsByFamily = (recommendations) => {
+  const unique = [];
+  const seen = new Set();
+
+  for (const recommendation of Array.isArray(recommendations) ? recommendations : []) {
+    const familyKey = String(recommendation?.fontFamily || "").trim().toLowerCase();
+    if (!familyKey || seen.has(familyKey)) {
+      continue;
+    }
+
+    seen.add(familyKey);
+    unique.push(recommendation);
+  }
+
+  return unique;
+};
+
 export const useResolvedFontCards = (recommendations) => {
   const [cards, setCards] = useState([]);
 
@@ -70,8 +87,9 @@ export const useResolvedFontCards = (recommendations) => {
     const normalized = Array.isArray(recommendations)
       ? recommendations.map((entry) => normalizeRecommendation(entry)).filter(Boolean)
       : [];
+    const deduped = dedupeRecommendationsByFamily(normalized);
 
-    if (!normalized.length) {
+    if (!deduped.length) {
       return undefined;
     }
 
@@ -79,7 +97,7 @@ export const useResolvedFontCards = (recommendations) => {
 
     const resolveCards = async () => {
       const resolved = await Promise.all(
-        normalized.map(async (entry) => {
+        deduped.map(async (entry) => {
           const fallback = buildFontCardFallbacks({
             family: entry.fontFamily,
             variants: entry.variants,
@@ -108,7 +126,7 @@ export const useResolvedFontCards = (recommendations) => {
 
     resolveCards().catch(() => {
       if (!abortController.signal.aborted) {
-        setCards(normalized.map((entry) => ({
+        setCards(deduped.map((entry) => ({
           ...entry,
           ...buildFontCardFallbacks({ family: entry.fontFamily, variants: entry.variants }),
         })));

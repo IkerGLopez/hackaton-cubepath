@@ -38,6 +38,23 @@ const normalizeVariants = (variants) => {
   return unique;
 };
 
+const dedupeRecommendationsByFamily = (recommendations) => {
+  const unique = [];
+  const seen = new Set();
+
+  for (const recommendation of Array.isArray(recommendations) ? recommendations : []) {
+    const familyKey = String(recommendation?.fontFamily || "").trim().toLowerCase();
+    if (!familyKey || seen.has(familyKey)) {
+      continue;
+    }
+
+    seen.add(familyKey);
+    unique.push(recommendation);
+  }
+
+  return unique;
+};
+
 const buildFallbackRecommendations = ({
   primaryFont,
   secondaryFont,
@@ -59,7 +76,7 @@ const buildFallbackRecommendations = ({
     ? String(googleFontsLinks[1])
     : primaryLink;
 
-  return [
+  return dedupeRecommendationsByFamily([
     {
       fontFamily: safePrimary,
       role: "heading",
@@ -80,17 +97,7 @@ const buildFallbackRecommendations = ({
       downloadUrl: secondaryLink,
       stylesheetUrl: "",
     },
-    {
-      fontFamily: safePrimary,
-      role: "accent",
-      shortRationale: "Use controlled accents for CTAs and key highlights.",
-      sampleText: "Strong accents guide user attention.",
-      provider: "google-fonts",
-      variants: ["500", "700"],
-      downloadUrl: primaryLink,
-      stylesheetUrl: "",
-    },
-  ];
+  ]);
 };
 
 const parseObject = (value) => {
@@ -99,19 +106,21 @@ const parseObject = (value) => {
   }
 
   const recommendations = Array.isArray(value.recommendations)
-    ? value.recommendations
-        .filter((entry) => entry && typeof entry === "object")
-        .map((entry) => ({
-          fontFamily: String(entry.fontFamily || entry.family || "").trim(),
-          role: String(entry.role || "body").trim() || "body",
-          shortRationale: String(entry.shortRationale || entry.rationale || "").trim(),
-          sampleText: String(entry.sampleText || "").trim(),
-          provider: String(entry.provider || "google-fonts").trim() || "google-fonts",
-          variants: normalizeVariants(entry.variants),
-          downloadUrl: String(entry.downloadUrl || "").trim(),
-          stylesheetUrl: String(entry.stylesheetUrl || "").trim(),
-        }))
-        .filter((entry) => entry.fontFamily)
+    ? dedupeRecommendationsByFamily(
+        value.recommendations
+          .filter((entry) => entry && typeof entry === "object")
+          .map((entry) => ({
+            fontFamily: String(entry.fontFamily || entry.family || "").trim(),
+            role: String(entry.role || "body").trim() || "body",
+            shortRationale: String(entry.shortRationale || entry.rationale || "").trim(),
+            sampleText: String(entry.sampleText || "").trim(),
+            provider: String(entry.provider || "google-fonts").trim() || "google-fonts",
+            variants: normalizeVariants(entry.variants),
+            downloadUrl: String(entry.downloadUrl || "").trim(),
+            stylesheetUrl: String(entry.stylesheetUrl || "").trim(),
+          }))
+          .filter((entry) => entry.fontFamily),
+      )
     : [];
 
   const primaryFont = value.primaryFont || value.primary_font;
