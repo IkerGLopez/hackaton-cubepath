@@ -1,4 +1,4 @@
-# Hackaton CubePath
+# Fontit
 
 Interactive landing page with an AI typography assistant.
 
