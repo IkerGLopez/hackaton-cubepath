@@ -402,6 +402,15 @@ export const retrieveTypographyContext = async (query) => {
   return debug.items.map((entry) => entry.item);
 };
 
+const truncateContextText = (text, maxLength = 500) => {
+  const normalized = String(text || "").trim();
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, maxLength).trim()}...`;
+};
+
 export const formatTypographyContextBlock = (entries) => {
   if (!Array.isArray(entries) || !entries.length) {
     return "";
@@ -411,7 +420,9 @@ export const formatTypographyContextBlock = (entries) => {
     .map((entry, index) => {
       const source = entry.sourceName ? ` Source: ${entry.sourceName}.` : "";
       const link = entry.sourceUrl ? ` URL: ${entry.sourceUrl}.` : "";
-      return `Context ${index + 1}: ${entry.title}. ${entry.content}.${source}${link}`;
+      const content = truncateContextText(entry.content, 450);
+      const title = truncateContextText(entry.title, 120);
+      return `Context ${index + 1}: ${title}. ${content}.${source}${link}`;
     })
     .join("\n");
 };

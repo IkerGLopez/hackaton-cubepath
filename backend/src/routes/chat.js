@@ -41,6 +41,17 @@ const MAX_MODEL_ATTEMPTS = readMaxModelAttempts();
 const MAX_REPAIR_ATTEMPTS = readMaxRepairAttempts();
 const OUTBOUND_TOKEN_CHUNK_SIZE = 72;
 
+const readMaxCompletionTokens = () => {
+  const parsed = Number.parseInt(String(process.env.GROQ_MAX_COMPLETION_TOKENS || "3072"), 10);
+  if (!Number.isFinite(parsed)) {
+    return 3072;
+  }
+
+  return Math.min(Math.max(parsed, 256), 8192);
+};
+
+const MAX_COMPLETION_TOKENS = readMaxCompletionTokens();
+
 const SYSTEM_PROMPT = [
   "You are a senior UI/UX typography expert for web products.",
   "Return STRICT JSON only. Never include markdown fences.",
@@ -73,6 +84,15 @@ const splitInChunks = (text, chunkSize) => {
   return chunks;
 };
 
+const truncateText = (text, maxLength = 500) => {
+  const normalized = String(text || "").trim();
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, maxLength).trim()}...`;
+};
+
 const requestModelCompletion = async ({ prompt, timeoutMs, systemPrompt = SYSTEM_PROMPT }) => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -83,7 +103,7 @@ const requestModelCompletion = async ({ prompt, timeoutMs, systemPrompt = SYSTEM
         model: getModelName(),
         stream: true,
         temperature: 1,
-        max_completion_tokens: 8192,
+        max_completion_tokens: MAX_COMPLETION_TOKENS,
         top_p: 1,
         stop: null,
         reasoning_effort: "medium",

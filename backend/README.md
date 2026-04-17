@@ -50,6 +50,7 @@ This behavior is implemented in src/server.js.
 
 - GROQ_API_KEY: required for chat endpoint.
 - GROQ_MODEL: model id (default openai/gpt-oss-20b).
+- GROQ_MAX_COMPLETION_TOKENS: maximum tokens requested for model generation (default 3072).
 - GROQ_TIMEOUT_MS: timeout for model requests (ms).
 - CHAT_MAX_MODEL_ATTEMPTS: max generation attempts before returning format error.
 - PORT: HTTP port.

@@ -1,40 +1,43 @@
 # Fontit
 
-Interactive landing page with an AI typography assistant.
+A polished landing page with an AI typography assistant that turns UI/UX briefs into structured font recommendations.
 
-The app helps users describe a UI/UX context and receive structured font recommendations, rendered as visual cards with editable preview text and selectable font variants.
+## What it does
+
+Fontit helps product teams, designers, and content creators by:
+
+- converting interface descriptions into typographic systems
+- recommending Google Fonts families, weights, and usage rationale
+- rendering recommendations as interactive font cards
+- supporting editable preview text and selectable font variants
+- handling malformed AI responses with an automatic repair pass
 
 ## Project structure
 
 ```text
 hackaton-cubepath/
-  frontend/    React + Vite + Tailwind SPA
-  backend/     Express proxy + SSE + AI orchestration
-  backend/knowledge/  Canonical external knowledge documents (JSON/Markdown)
+  frontend/          React + Vite + Tailwind SPA
+  backend/           Express proxy + SSE + AI orchestration
+  backend/knowledge/ External typography knowledge documents
 ```
 
-## Tech stack
+## Technology stack
 
 - Package manager: pnpm only
 - Frontend: React, Vite, Tailwind CSS
 - Backend: Node.js, Express, Groq SDK
 - Streaming: Server-Sent Events (SSE)
 
-## Features
+## Key features
 
-- AI-driven typography recommendations with strict JSON contract.
-- AI-only recommendation mode (no hardcoded recommendation fallback payload).
-- Automatic JSON-repair pass via AI when model output is malformed.
-- Font cards with:
-  - Editable preview text.
-  - Download link.
-  - Interactive variant buttons (weight/style).
-- RAG-lite context retrieval:
-  - Internal typography corpus.
-  - External ingestion from backend/knowledge/ directory.
-  - Intent-aware reranking (landing, dashboard, ecommerce, editorial).
+- AI-first typography recommendations with a strict JSON contract
+- No hardcoded fallback recommendations in the UI
+- Robust backend validation and JSON repair for malformed model output
+- Interactive font cards with preview text and download links
+- External knowledge ingestion from `backend/knowledge/`
+- Intent-aware reranking for landing pages, dashboards, ecommerce, and editorial use cases
 
-## Prerequisites
+## Requirements
 
 - Node.js 20+
 - pnpm 10+
@@ -47,103 +50,105 @@ hackaton-cubepath/
 pnpm install
 ```
 
-2. Create local environment file from template:
+2. Copy the environment template:
 
 ```bash
 cp .env.example .env
 ```
 
-3. Fill required variables in .env:
+3. Fill required variables in `.env`:
 
-- GROQ_API_KEY
-- GROQ_MODEL (optional override)
-- GOOGLE_FONTS_API_KEY (recommended)
+- `GROQ_API_KEY`
+- `GROQ_MODEL` (optional)
+- `GOOGLE_FONTS_API_KEY` (recommended)
 
-4. Run frontend and backend together:
+4. Start both frontend and backend:
 
 ```bash
 pnpm dev
 ```
 
-- Frontend: http://localhost:5173
-- Backend: http://localhost:3001
+5. Open the app:
 
-## Workspace scripts
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:3001`
 
-- pnpm dev: run frontend and backend in parallel
-- pnpm dev:frontend: run only frontend
-- pnpm dev:backend: run only backend
-- pnpm build: build all workspaces
+## Useful workspace scripts
+
+- `pnpm dev` — run frontend and backend together
+- `pnpm dev:frontend` — run only frontend
+- `pnpm dev:backend` — run only backend
+- `pnpm build` — build all workspaces
 
 ## Environment variables
 
-Use .env.example as source of truth.
+Use `.env.example` as the source of truth.
 
-### Backend
+### Backend variables
 
-- GROQ_API_KEY: Groq API key.
-- GROQ_MODEL: model id (default openai/gpt-oss-20b).
-- GROQ_TIMEOUT_MS: timeout per model request.
-- CHAT_MAX_MODEL_ATTEMPTS: max generation attempts before error.
-- PORT: backend port.
-- CORS_ORIGINS: comma-separated allowlist.
-- FONT_PROVIDER: currently google-fonts.
-- GOOGLE_FONTS_API_KEY: Google Webfonts API key.
-- FONTS_CACHE_TTL_MS: Google font catalog cache TTL.
-- TYPO_CONTEXT_MAX_ENTRIES: max context docs in prompt.
-- TYPO_CONTEXT_MIN_SCORE: retrieval score threshold.
-- KNOWLEDGE_DIR: path to external knowledge folder.
-- KNOWLEDGE_CACHE_TTL_MS: external docs cache TTL.
+- `GROQ_API_KEY`: Groq API key
+- `GROQ_MODEL`: model ID (default: `openai/gpt-oss-20b`)
+- `GROQ_TIMEOUT_MS`: request timeout for model calls
+- `CHAT_MAX_MODEL_ATTEMPTS`: retries before failing
+- `PORT`: backend port
+- `CORS_ORIGINS`: comma-separated allowed frontend origins
+- `FONT_PROVIDER`: currently `google-fonts`
+- `GOOGLE_FONTS_API_KEY`: Google Fonts API key
+- `FONTS_CACHE_TTL_MS`: font catalog cache TTL
+- `TYPO_CONTEXT_MAX_ENTRIES`: max documents included in prompt context
+- `TYPO_CONTEXT_MIN_SCORE`: retrieval threshold for knowledge documents
+- `KNOWLEDGE_DIR`: external knowledge folder path
+- `KNOWLEDGE_CACHE_TTL_MS`: external docs cache TTL
 
-### Frontend
+### Frontend variables
 
-- VITE_API_BASE_URL: backend base URL.
+- `VITE_API_BASE_URL`: backend base URL
 
 ## API overview
 
-- GET /health
-- POST /api/chat/stream (SSE)
-- GET /api/fonts/providers
-- GET /api/fonts
-- GET /api/fonts/:family
-- GET /api/knowledge/search
+- `GET /health`
+- `POST /api/chat/stream` — SSE chat stream
+- `GET /api/fonts/providers`
+- `GET /api/fonts`
+- `GET /api/fonts/:family`
+- `GET /api/knowledge/search`
 
-For full backend details, see backend/README.md.
+For backend implementation details, see `backend/README.md`.
 
-## Knowledge ingestion
+## Extending knowledge
 
-Add JSON/Markdown files under backend/knowledge/ to extend context without code changes.
+Add new JSON or Markdown files under `backend/knowledge/` to expand the assistant's typography corpus.
 
-- JSON: array or { "documents": [...] }
-- Markdown: optional frontmatter + body content
-- Supported intents: landing, dashboard, ecommerce, editorial
+- JSON: array or object with `documents`
+- Markdown: optional front matter + content body
+- Supported intents: `landing`, `dashboard`, `ecommerce`, `editorial`
 
-See backend/knowledge/README.md for exact schema examples.
+See `backend/knowledge/README.md` for schema examples.
 
-## Frontend behavior
+## Frontend behavior notes
 
-The frontend consumes SSE events from /api/chat/stream:
+The frontend consumes SSE events from `/api/chat/stream` and handles these event types:
 
-- meta
-- token
-- usage
-- diagnostics
-- done
-- error
+- `meta`
+- `token`
+- `usage`
+- `diagnostics`
+- `done`
+- `error`
 
 Tokens are concatenated and parsed into structured recommendation objects.
 
 ## Deployment notes
 
-- Keep secrets only in .env (never commit real keys).
-- Configure CORS_ORIGINS to your production frontend domains.
-- Build all workspaces with pnpm build before release.
+- Never commit real secrets. Keep API keys in `.env` only.
+- Set `CORS_ORIGINS` to production frontend domains.
+- Run `pnpm build` for both frontend and backend before deployment.
 
-See DEPLOY_CHECKLIST.md for deployment checklist.
+See `DEPLOY_CHECKLIST.md` for deployment steps and validation.
 
 ## Additional documentation
 
-- Frontend guide: frontend/README.md
-- Backend guide: backend/README.md
-- Knowledge format: backend/knowledge/README.md
-- Plan and phases: PLAN.md
+- `frontend/README.md`
+- `backend/README.md`
+- `backend/knowledge/README.md`
+- `PLAN.md`
